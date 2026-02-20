@@ -22,4 +22,10 @@ export const ENC_BYTE=process.env.ENC_BYTE
 
 export const SALT_ROUND = parseInt(process.env.SALT_ROUND ?? '10')
 export const ENCRYPTION_SECRET_KEY = Buffer.from(ENC_BYTE);
+export const System_TOKEN_SECRET_KEY=process.env.System_TOKEN_SECRET_KEY
+export const User_TOKEN_SECRET_KEY=process.env.User_TOKEN_SECRET_KEY
+export const System_Refresh_TOKEN_SECRET_KEY=process.env.System_Refresh_TOKEN_SECRET_KEY
+export const User_Refresh_TOKEN_SECRET_KEY=process.env.User_Refresh_TOKEN_SECRET_KEY
+export const Access_Expire_In=parseInt(process.env.Access_Expire_In)
+export const Refresh_Expire_In =parseInt(process.env.Refresh_Expire_In)
 console.log({SALT_ROUND});

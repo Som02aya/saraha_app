@@ -3,10 +3,12 @@ import { NODE_ENV, port } from '../config/config.service.js'
 import { authRouter, userRouter } from './modules/index.js'
 import express from 'express'
 import {connectdb} from './DB/index.js'
+import cors from 'cors'
 async function bootstrap() {
     const app = express()
     //convert buffer data
-    app.use(express.json())
+    app.use(cors(),express.json())
+    app.use(express.urlencoded({ extended: true }));
     await connectdb();
     //application routing
     app.get('/', (req, res) => res.send('Hello World!'))
