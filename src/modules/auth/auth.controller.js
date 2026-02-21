@@ -2,12 +2,16 @@ import { Router } from 'express'
 import {  signup,login, loginWithGmail } from './auth.service.js';
 import joi from'joi'
 import nodemailer from "nodemailer";
+import { Otp } from '../../DB/model/otp.model.js';
+import { sendOtpService } from './auth.service.js';
+import { verifyOtpService } from './auth.service.js';
 const router = Router(); 
 router.post("/signup", async (req, res, next) => {
+    console.log(req.body.password)
     const loginSchema=joi.object().keys({
     
         email:joi.string().email({maxDomainSegments:3,minDomainSegments:2,tlds:{allow:['com','net','edu']}}).required(),
-        password:joi.string(),
+        password:joi.string().required(),
         //cpassword:joi.string()
         //gender:joi.string().valid("male","female").insensitive(),
         //age:joi.number().integer().positive().min(20).max(80).required(),
@@ -21,13 +25,10 @@ router.post("/signup", async (req, res, next) => {
      username: joi.string().min(2).max(20).required().messages({
     "any.required":"email is mandatory"
     }).insensitive().not("male","female").alphanum(),
+    phone: joi.string().required(),
     cpassword:joi.string().valid(joi.ref("password"))
     }).required()
 
-     const verifyOtpSchema = joi.object({
-    email: joi.string().email().required(),
-    code: joi.string().length(6).required() 
-    }).required();
     
      const validationResult =signupSchema.validate(req.body,{abortEarly:false})
      if(validationResult.error){
@@ -35,8 +36,8 @@ router.post("/signup", async (req, res, next) => {
          throw new Error(messages.join(", "))
      }
 
-    //const result = await signup(req.body)
-    return res.status(201).json({ message: "Done signup", validationResult })
+    const result = await signup(req.body)
+    return res.status(201).json({ message: "Done signup", result })
 })
 
 router.post("/login", async (req, res, next) => {
@@ -61,6 +62,29 @@ router.post("/login/gmail", async (req, res, next) => {
     const account =await loginWithGmail(req.body,`${req.protocol}://${req.host}`)
     return res.status(201).json({ message: "Done signupwith gmail", account })
 })
+
+
+router.post("/send-otp", async (req, res, next) => {
+    try {
+        console.log(req.body);
+        const result = await sendOtpService(req.body.email);
+        return res.status(201).json(result);
+    } catch (err) {
+        next(err); 
+    }
+});
+
+
+router.post("/verify-otp", async (req, res, next) => {
+    try {
+        console.log(req.body);
+        const result = await verifyOtpService(req.body.email, req.body.code);
+        return res.status(201).json(result);
+    } catch (err) {
+        next(err);
+    }
+});
+
 
 
 export default router

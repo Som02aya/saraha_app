@@ -13,6 +13,8 @@ import { getTokenSignauture,createLoginCreadintials } from '../../security/token
 import {  AudienceEnum } from  '../../enums/sequrity.enum.js'
 import {OAuth2Client} from 'google-auth-library';
 import { model } from "mongoose";
+import { Otp } from "../../DB/model/otp.model.js";
+import nodemailer from 'nodemailer'
 
 export const signup = async (inputs) => {
     const {username,email,password,phone}=inputs;
@@ -126,3 +128,43 @@ export const signupWithGmail=async({idToken,issuer})=>{
    
   
   }
+
+
+export const sendOtpService = async (email) => {
+    const code = Math.floor(100000 + Math.random() * 900000); 
+    const expireAt = new Date(Date.now() + 5 * 60 * 1000); 
+
+    
+    await Otp.create({ email, code, expireAt });
+
+    
+    const transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASS, 
+        },
+    });
+
+    const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: email,
+        subject: "Your OTP Code",
+        text: `Your verification code is: ${code}. It will expire in 5 minutes.`,
+    };
+
+   
+    await transporter.sendMail(mailOptions);
+
+    return { message: "OTP sent successfully!", code }; 
+};
+
+export const verifyOtpService = async (email, code) => {
+    const otp = await Otp.findOne({ email, code });
+    if (!otp) throw new Error("Invalid OTP");
+    if (otp.expireAt < new Date()) throw new Error("OTP expired");
+
+    return { message: "OTP verified successfully!" };
+};
+
+

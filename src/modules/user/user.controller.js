@@ -7,6 +7,7 @@ import { endpoint } from "./user.authorization.js";
 import { verifyToken } from "../../security/token.security.js";
 import { User_TOKEN_SECRET_KEY } from "../../../config/config.service.js";
 import { upload } from "../../middleware/multer.middleware.js";
+import { UserModel } from "../../DB/model/user.model.js";
 const router=Router()
 
 router.get("/" ,authentication(),authorization(endpoint.profile), async(req,res,next)=>{
@@ -25,7 +26,7 @@ router.get("/" ,authentication(),authorization(endpoint.profile), async(req,res,
              console.log(data);
              console.log(username,password);
               break;
-       case 'Barear':
+       case 'Bearer':
          const result =verifyToken({token:credential,secret:User_TOKEN_SECRET_KEY})
          console.log(result);
          
@@ -34,37 +35,28 @@ router.get("/" ,authentication(),authorization(endpoint.profile), async(req,res,
             break;
     }
 
-router.put("/profile-image", async (req, res, next) => {
-
-  upload.single("image")(req, res, async function (err) {
-
-    if (err) {
-      return next(err);
-    }
-
+    const account  = await profile(req.user)
+    return res.status(200).json({message:"Profile" , account})
+})
+  
+router.put(
+  "/profile-image",
+  authentication(), 
+  upload.single("image"),
+  async (req, res, next) => {
     try {
-
-      if (!req.file) {
-        return res.json({ message: "No image uploaded" });
-      }
+      if (!req.file) return res.json({ message: "No image uploaded" });
 
       const imagePath = req.file.path;
 
-      await UserModel.findByIdAndUpdate(req.user._id, {
-        profileImage: imagePath,
-      });
+      await UserModel.findByIdAndUpdate(req.user._id, { profileImage: imagePath });
 
-      res.json({
-        message: "Profile image uploaded successfully"
-      });
-
+      res.json({ message: "Profile image uploaded successfully" });
     } catch (error) {
       next(error);
     }
-
-  });
-
-});
+  }
+);
    
     
     
@@ -72,9 +64,6 @@ router.put("/profile-image", async (req, res, next) => {
     
     
     
-    const account  = await profile(req.user)
-    return res.status(200).json({message:"Profile" , account})
-})
 
 
 router.get("/rotate" ,authentication(TokenTypeEnum.refresh), async(req,res,next)=>{
